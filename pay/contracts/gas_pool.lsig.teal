@@ -1,0 +1,37 @@
+#pragma version 10
+// only approve fee-payment txns paired with a guardrails app call
+
+// no rekey
+txn RekeyTo
+global ZeroAddress
+==
+
+// no drain
+txn CloseRemainderTo
+global ZeroAddress
+==
+&&
+
+// fee cap: 2000 microAlgo
+txn Fee
+int 2000
+<=
+&&
+
+// must be a payment (fee coverage)
+txn TypeEnum
+int pay
+==
+&&
+
+// replay prevention: lease must be non-zero
+txn Lease
+byte 0x0000000000000000000000000000000000000000000000000000000000000000
+!=
+&&
+
+// paired tx must call the guardrails app (slot 1 in atomic group)
+gtxna 1 ApplicationID
+int GUARDRAILS_APP_ID
+==
+&&
