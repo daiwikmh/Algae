@@ -18,7 +18,6 @@ async function main() {
   const signer = algosdk.makeBasicAccountTransactionSigner(account)
   console.log(`Deployer: ${addr}`)
 
-  // deploy MerchantRegistry
   console.log('\nDeploying MerchantRegistry...')
   const registryArc32 = JSON.parse(fs.readFileSync(path.join(ARTIFACTS, 'MerchantRegistry.arc32.json'), 'utf-8'))
   const registryFactory = algorand.client.getAppFactory({
@@ -32,7 +31,6 @@ async function main() {
   console.log(`MerchantRegistry app_id: ${registryAppId}`)
   console.log(`MerchantRegistry address: ${registryAppAddress}`)
 
-  // deploy PaymentProcessor
   console.log('\nDeploying PaymentProcessor...')
   const processorArc32 = JSON.parse(fs.readFileSync(path.join(ARTIFACTS, 'PaymentProcessor.arc32.json'), 'utf-8'))
   const processorFactory = algorand.client.getAppFactory({

@@ -9,10 +9,8 @@ import webhookRoutes from './webhook.routes'
 import auditRoutes from './audit.routes';
 const router: Router = Router()
 
-// Public
 router.use('/auth', authRoutes)
 
-// Protected 
 router.use('/keys', jwtMiddleware, apiKeyRoutes)
 router.use('/gas-pool', jwtMiddleware, gasPoolRoutes);
 router.use('/agents', jwtMiddleware, agentRoutes)

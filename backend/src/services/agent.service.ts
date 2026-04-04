@@ -10,7 +10,6 @@ async function registerAgentOnChain(params: {
     vendorWhitelistHash: string
 }): Promise<string> {
 
-    // TODO : registerAgentOnChain
     logger.warn('registerAgentOnChain', params);
     return 'TODO: register agent on chain';
 }
@@ -21,7 +20,6 @@ export async function getAgentStatusOnChain(algoAddr: string): Promise<{
     lastResetDay: bigint,
 }> {
     logger.warn('getAgentStatus', { algoAddr });
-    // TODO : getAgentStatus
     return {
         dailyLimit: BigInt(0),
         dailySpent: BigInt(0),
@@ -31,7 +29,6 @@ export async function getAgentStatusOnChain(algoAddr: string): Promise<{
 
 async function suspendAgentOnChain(algoAddr: string): Promise<void> {
     logger.warn('suspendAgentOnChain', { algoAddr });
-    // TODO : suspendAgentonChain
 }
 
 export function shouldResetDaily(lastResetAt: Date): boolean {

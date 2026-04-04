@@ -68,7 +68,6 @@ export class GitHubProvider implements IOAuthProvider {
                 )
                 email = primary?.email ?? ''
             } catch {
-                // ignore      
             }
         }
 

@@ -5,16 +5,12 @@ const MAX_ACCOUNTS = 5;
 export class MerchantRegistry extends Contract {
   admin = GlobalStateKey<Address>();
 
-  // merchantId -> primary settlement address
   merchantAddress = BoxMap<bytes, Address>({ prefix: 'ma' });
 
-  // merchantId -> active flag
   merchantActive = BoxMap<bytes, boolean>({ prefix: 'mc' });
 
-  // merchantId -> count of additional accounts
   merchantExtraCount = BoxMap<bytes, uint64>({ prefix: 'mx' });
 
-  // concat(merchantId, itob(index)) -> additional address
   merchantExtraAccounts = BoxMap<bytes, Address>({ prefix: 'me' });
 
   createApplication(): void {

@@ -147,6 +147,7 @@ model Payment {
   userId         String
   agentId        String
   poolId         String
+  merchantId     String?
   status         PaymentStatus @default(pending)
   amountUsdCents Int
   amountUsdc     String?

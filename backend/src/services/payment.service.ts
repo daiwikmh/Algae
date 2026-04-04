@@ -1,54 +1,13 @@
 import { db } from "../../db/client"
 import { PaymentStatus } from "../../generated/prisma/enums"
 import { logger } from "../lib/logger"
-import { shouldResetDaily, spendFromAgent } from "./agent.service"
+import { shouldResetDaily } from "./agent.service"
 import { createAuditLog } from "./audit.service"
-import { debitFromPool } from "./gas-pool.service"
 import { triggerWebhook } from "./webhook.service"
-
-async function submitOnChainPayment(params: {
-    fromAddr: string
-    toAddr: string
-    amountUsdc: bigint
-    invoiceId: string
-    network: string
-}): Promise<{
-    txnId: string;
-    blockRound: number
-}> {
-    // TODO : submitOnChainPayment
-    logger.warn('submitOnChainPayment')
-    return {
-        txnId: 'TODO : submitOnChainPayment',
-        blockRound: 0
-    }
-}
-
-async function verifyOnChainPayment(params: {
-    txnId: string
-    network: string
-}): Promise<boolean> {
-    // TODO : verifyOnChainPayment
-    logger.warn('verifyOnChainPayment')
-    return false
-}
-
-async function getGasFeeAlgo(txnId: string): Promise<string> {
-    logger.warn('getGasFeeAlgo', { txnId })
-    // TODO : getGasFeeAlgo
-    return 'TODO : getGasFeeAlgo'
-}
-
-// convert - USDC to INR or bank payout
-async function initiatePayout(params: {
-    amtUsdc: bigint,
-    bankAcc: string,
-    invoiceId: string
-}): Promise<string> {
-    logger.warn('initiatePayout', { params })
-    // TODO : initiatePayout
-    return 'TODO : initiatePayout'
-}
+import {
+    submitOnChainPayment,
+    getGasFeeAlgo as fetchGasFeeAlgo,
+} from "../lib/payment-processor"
 
 interface TimelineEvent {
     step: string
@@ -69,6 +28,7 @@ export async function initiatePayment(params: {
     userId: string
     agentId: string
     poolId: string
+    merchantId: string
     amountUsdcCents: number
     network: 'mainnet' | 'testnet'
 }) {
@@ -107,6 +67,7 @@ export async function initiatePayment(params: {
                 userId: params.userId,
                 agentId: params.agentId,
                 poolId: params.poolId,
+                merchantId: params.merchantId,
                 status: 'pending',
                 amountUsdCents: params.amountUsdcCents,
                 amountUsdc: amountUsdc.toString(),
@@ -151,7 +112,6 @@ export async function processPayment(paymentId: string) {
             if (!agent) throw new Error('Agent not found')
             if (agent.status === 'suspended') throw new Error('Agent is suspended')
 
-            // lazy reset
             let currentSpent = agent.dailySpentCents
             if (shouldResetDaily(agent.lastResetAt)) {
                 await tx.agent.update({
@@ -206,11 +166,12 @@ export async function processPayment(paymentId: string) {
             timestamp: Date.now(),
         })
 
+        if (!payment.merchantId) throw new Error('Payment has no merchantId')
+
         const { txnId, blockRound } = await submitOnChainPayment({
-            fromAddr: payment.agent!.algoAddress,
-            toAddr: payment.agent!.algoAddress, // TODO: actual recipient address
             amountUsdc: BigInt(payment.amountUsdc ?? '0'),
             invoiceId: payment.invoiceId,
+            merchantId: payment.merchantId,
             network: payment.network,
         })
 
@@ -221,14 +182,7 @@ export async function processPayment(paymentId: string) {
             detail: `TxID: ${txnId}`,
         })
 
-        const gasFeeAlgo = await getGasFeeAlgo(txnId)
-
-        // Change if Needed : TODO: initiatePayout
-        const refrencePayout = await initiatePayout({
-            amtUsdc: BigInt(payment.amountUsdc ?? '0'),
-            bankAcc: 'TODO : bank account',
-            invoiceId: payment.invoiceId,
-        })
+        const gasFeeAlgo = await fetchGasFeeAlgo({ txnId, network: payment.network })
 
         timeline = addTimelineEvent(timeline, {
             step: 'Payment settled',

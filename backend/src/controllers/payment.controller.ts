@@ -14,6 +14,7 @@ const InitiateSchema = z.object({
     invoiceId: z.string().min(1),
     agentId: z.string().uuid(),
     poolId: z.string().uuid(),
+    merchantId: z.string().min(1),
     amountUsdCents: z.number().int().min(1),
     network: z.enum(['mainnet', 'testnet']).default('testnet'),
 })
@@ -36,9 +37,9 @@ export async function initiate(req: Request, res: Response): Promise<void> {
             agentId: parsed.data.agentId,
             poolId: parsed.data.poolId,
             invoiceId: parsed.data.invoiceId,
+            merchantId: parsed.data.merchantId,
             amountUsdcCents: parsed.data.amountUsdCents,
             network: parsed.data.network,
-
         })
         res.status(201).json(payment)
     } catch (err) {
