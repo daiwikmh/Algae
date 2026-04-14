@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import * as fs from 'fs'
 import * as path from 'path'
 import algosdk from 'algosdk'
-import arc32Json from '../../contracts/artifacts/PaymentProcessor.arc56.json'
+import arc32Json from '../../contracts/artifacts/PaymentProcessor.arc32.json'
 import {
     USDC_ASSET_ID,
     getAlgodClient,
