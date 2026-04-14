@@ -1,11 +1,50 @@
 "use client";
 
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowLeft } from "lucide-react";
-import { gasCreateNetworks } from "@/lib/dummy-data";
+import { api, ApiError } from "@/lib/api";
 
 export default function CreateGasPoolPage() {
+  const router = useRouter();
+  const [form, setForm] = useState({
+    apiKeyId: "",
+    dailyCapCents: "",
+    alertThresholdUsdc: "",
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  function set(field: string, value: string) {
+    setForm((prev) => ({ ...prev, [field]: value }));
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const dailyCapCents = parseInt(form.dailyCapCents);
+      const alertMicroUsdc = String(Math.round(parseFloat(form.alertThresholdUsdc) * 1_000_000));
+      await api.post("/gas-pool", {
+        apiKeyId: form.apiKeyId.trim(),
+        dailyCapCents,
+        alertThresholdUsdc: alertMicroUsdc,
+      });
+      router.push("/gas");
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError("Authentication required.");
+      } else {
+        setError(err instanceof Error ? err.message : "Failed to create pool");
+      }
+    } finally {
+      setLoading(false);
+    }
+  }
+
   return (
     <motion.section
       initial={{ opacity: 0, y: 14 }}
@@ -20,90 +59,67 @@ export default function CreateGasPoolPage() {
         </p>
       </div>
 
-      <Link
-        href="/gas"
-        className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200"
-      >
+      <Link href="/gas" className="inline-flex items-center gap-2 text-slate-400 hover:text-slate-200">
         <ArrowLeft className="h-4 w-4" />
-        Back To Gas Pool
+        Back To Gas Pools
       </Link>
 
       <div className="grid gap-4 lg:grid-cols-[1fr_300px]">
         <section className="rounded-md border border-slate-800 bg-[#1d1f22] p-4">
-          <form className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label className="mb-1 block text-sm text-slate-300">
-                Pool Name
-              </label>
+              <label className="mb-1 block text-sm text-slate-300">API Key ID</label>
               <input
+                required
+                value={form.apiKeyId}
+                onChange={(e) => set("apiKeyId", e.target.value)}
                 className="h-12 w-full rounded-md border border-slate-700 bg-[#242629] px-3 text-slate-100 placeholder:text-slate-500"
-                placeholder="e.g. Pool-alpha"
+                placeholder="UUID of an existing API key"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm text-slate-300">
-                API Key ID
-              </label>
+              <label className="mb-1 block text-sm text-slate-300">Daily Cap (USD cents)</label>
               <input
+                required
+                type="number"
+                min="0"
+                value={form.dailyCapCents}
+                onChange={(e) => set("dailyCapCents", e.target.value)}
                 className="h-12 w-full rounded-md border border-slate-700 bg-[#242629] px-3 text-slate-100 placeholder:text-slate-500"
-                placeholder="e.g. ABCDEF123...XYZ"
+                placeholder="e.g. 500000 = $5,000"
               />
             </div>
 
             <div>
-              <label className="mb-1 block text-sm text-slate-300">
-                Daily Cap (USD cents)
-              </label>
+              <label className="mb-1 block text-sm text-slate-300">Alert Threshold (USDC)</label>
               <input
+                required
+                type="number"
+                min="0"
+                step="0.01"
+                value={form.alertThresholdUsdc}
+                onChange={(e) => set("alertThresholdUsdc", e.target.value)}
                 className="h-12 w-full rounded-md border border-slate-700 bg-[#242629] px-3 text-slate-100 placeholder:text-slate-500"
-                placeholder="e.g. 500000"
+                placeholder="e.g. 50"
               />
             </div>
 
-            <div>
-              <label className="mb-1 block text-sm text-slate-300">
-                Alert Threshold (USDC)
-              </label>
-              <input
-                className="h-12 w-full rounded-md border border-slate-700 bg-[#242629] px-3 text-slate-100 placeholder:text-slate-500"
-                placeholder="50"
-              />
-            </div>
-
-            <div>
-              <label className="mb-2 block text-sm text-slate-300">
-                Blockchain Network
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {gasCreateNetworks.map((network, index) => (
-                  <button
-                    key={network}
-                    type="button"
-                    className={`rounded-md border px-4 py-2 text-xs uppercase ${
-                      index === 0
-                        ? "bg-slate-100 text-slate-900"
-                        : "border-slate-500 text-slate-100"
-                    }`}
-                  >
-                    {network}
-                  </button>
-                ))}
-              </div>
-            </div>
+            {error && <p className="text-sm text-rose-400">{error}</p>}
 
             <div className="flex items-center gap-3 border-t border-slate-800 pt-4">
-              <button
-                type="button"
+              <Link
+                href="/gas"
                 className="rounded-md border border-slate-500 px-4 py-2 text-xs uppercase text-slate-100"
               >
                 Cancel
-              </button>
+              </Link>
               <button
                 type="submit"
-                className="rounded-md bg-btn-gradient px-4 py-2 text-xs uppercase text-slate-900"
+                disabled={loading}
+                className="rounded-md bg-btn-gradient px-4 py-2 text-xs uppercase text-slate-900 disabled:opacity-50"
               >
-                Create Pool
+                {loading ? "Creating..." : "Create Pool"}
               </button>
             </div>
           </form>
@@ -115,10 +131,10 @@ export default function CreateGasPoolPage() {
               How Gas Pools Work
             </h2>
             <ol className="mt-4 space-y-3 text-sm text-slate-300">
-              <li>1. Fund the pool with USDC</li>
-              <li>2. Assign agents to this pool</li>
-              <li>3. Gas is auto-sponsored per transaction</li>
-              <li>4. Monitor burn rate in dashboard</li>
+              <li>1. Create a pool linked to an API key</li>
+              <li>2. Top up the pool with USDC via your wallet</li>
+              <li>3. Assign agents to this pool</li>
+              <li>4. Gas is auto-sponsored per transaction</li>
             </ol>
           </aside>
 
@@ -127,15 +143,8 @@ export default function CreateGasPoolPage() {
               Initial Funding Required
             </h2>
             <p className="mt-3 text-sm text-emerald-100/80">
-              You will need to top up this pool with USDC after creation before
-              agents can process transactions.
+              After creation, top up this pool with USDC from your connected wallet before agents can process transactions.
             </p>
-            <button
-              type="button"
-              className="mt-4 rounded-md border border-emerald-500 px-4 py-2 text-xs uppercase text-emerald-300"
-            >
-              Delete Agent
-            </button>
           </aside>
         </div>
       </div>

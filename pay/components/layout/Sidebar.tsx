@@ -10,6 +10,7 @@ import {
   Home,
   LogOut,
   Settings,
+  Store,
   Webhook,
   type LucideIcon,
 } from "lucide-react";
@@ -18,6 +19,7 @@ const sidebarItems = [
   { key: "home", label: "Home", href: "/" },
   { key: "payments", label: "Payments", href: "/payments" },
   { key: "agents", label: "Agents", href: "/agents" },
+  { key: "merchants", label: "Merchants", href: "/merchants" },
   { key: "gas", label: "Gas", href: "/gas" },
   { key: "webhooks", label: "Web Hooks", href: "/webhooks" },
   { key: "apihooks", label: "Api Hooks", href: "/api-hooks" },
@@ -28,6 +30,7 @@ const iconByKey: Record<string, LucideIcon> = {
   home: Home,
   payments: HandCoins,
   agents: Bot,
+  merchants: Store,
   gas: Fuel,
   webhooks: Webhook,
   apihooks: Webhook,
