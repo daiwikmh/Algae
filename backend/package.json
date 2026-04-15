@@ -4,7 +4,7 @@
   "main": "dist/server.js",
   "scripts": {
     "dev": "nodemon --watch src --ext ts --exec ts-node src/server.ts",
-    "build": "prisma generate && rimraf dist && tsc",
+    "build": "prisma generate && rimraf dist && tsc && mkdir -p dist/contracts && cp contracts/gas_pool.lsig.teal dist/contracts/gas_pool.lsig.teal",
     "start": "node dist/server.js",
     "compile:contracts": "ALGOD_SERVER=https://testnet-api.algonode.cloud ALGOD_PORT=443 ALGOD_TOKEN=a tealscript contracts/MerchantRegistry.ts contracts/artifacts && ALGOD_SERVER=https://testnet-api.algonode.cloud ALGOD_PORT=443 ALGOD_TOKEN=a tealscript contracts/PaymentProcessor.ts contracts/artifacts",
     "deploy:contracts": "ts-node contracts/deploy.ts",
