@@ -2,7 +2,7 @@ import crypto from 'crypto'
 import * as fs from 'fs'
 import * as path from 'path'
 import algosdk from 'algosdk'
-import arc32Json from '../../contracts/artifacts/PaymentProcessor.arc32.json'
+import arc4Json from '../../contracts/artifacts/PaymentProcessor.arc4.json'
 import {
     USDC_ASSET_ID,
     getAlgodClient,
@@ -52,7 +52,7 @@ export async function submitOnChainPayment(params: {
     const lsig = await getGasPoolLsig(algod)
     const lsigSigner = algosdk.makeLogicSigAccountTransactionSigner(lsig)
 
-    const iface = new algosdk.ABIInterface(arc32Json.contract)
+    const iface = new algosdk.ABIInterface(arc4Json)
     const method = iface.getMethodByName('processPayment')
 
     const atc = new algosdk.AtomicTransactionComposer()

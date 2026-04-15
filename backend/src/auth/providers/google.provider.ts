@@ -11,7 +11,7 @@ export class GoogleProvider implements IOAuthProvider {
 
     constructor(private readonly config: ProviderConfig) {
         if (!config.clientId || !config.clientSecret || !config.redirectUri) {
-            throw new Error('GoogleProvider: clientId, clientSecret, redirectUri required')
+            console.warn('GoogleProvider: clientId, clientSecret, redirectUri required')
         }
     }
 
