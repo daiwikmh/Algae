@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, useCallback, ReactNode } from "react";
 import { useRouter, usePathname } from "next/navigation";
-import { api, setApiToken, clearApiToken, ApiError } from "@/lib/api";
+import { api, setApiToken, clearApiToken } from "@/lib/api";
 
 interface User {
   id: string;

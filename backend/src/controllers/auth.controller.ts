@@ -25,15 +25,15 @@ export async function githubCallback(req: Request, res: Response): Promise<void>
         const { accessToken, refreshToken } = await handleGitHubCallback(code)
         res.cookie('refresh_token', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 30 * 24 * 60 * 60 * 1000,
         })
         res.cookie('access_token', accessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
-            maxAge: 15 * 60 * 1000, // 15 min 
+            secure: true,
+            sameSite: 'none',
+            maxAge: 15 * 60 * 1000,
         })
         res.redirect(`${process.env.FRONTEND_URL}/auth/callback`)
     } catch (err) {
@@ -58,14 +58,14 @@ export async function googleCallback(req: Request, res: Response): Promise<void>
         const { accessToken, refreshToken } = await handleGoogleCallback(code)
         res.cookie('refresh_token', refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 30 * 24 * 60 * 60 * 1000,
         })
         res.cookie('access_token', accessToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 15 * 60 * 1000,
         })
         res.redirect(`${process.env.FRONTEND_URL}/auth/callback`)
@@ -113,8 +113,8 @@ export async function refreshToken(req: Request, res: Response): Promise<void> {
 
         res.cookie('refresh_token', result.refreshToken, {
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            sameSite: 'lax',
+            secure: true,
+            sameSite: 'none',
             maxAge: 30 * 24 * 60 * 60 * 1000,
         })
 
