@@ -37,7 +37,7 @@ export default function LoginPage() {
         <div className="mb-8 space-y-2">
           <h1 className="text-3xl text-slate-100">Algopay</h1>
           <div className="h-1 w-24 rounded-full bg-btn-gradient" />
-          <p className="text-sm text-slate-400">Payment infrastructure for AI agents</p>
+          <p className="text-sm text-slate-400">Payment infrastructure for Businesses</p>
         </div>
 
         {error && (
