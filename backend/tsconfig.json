@@ -21,7 +21,6 @@
   },
   "include": [
     "src/**/*",
-    "contracts/**/*",
     "db/**/*",
     "prisma.config.ts"
   ],
