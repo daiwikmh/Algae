@@ -21,7 +21,7 @@ export default function AppShell({ children }: AppShellProps) {
           <Sidebar />
         </div>
 
-        <main className="scrollbar-hide h-full min-h-0 w-full overflow-y-auto rounded-xl pr-1">
+        <main className="scrollbar-hide h-full min-h-0 w-full overflow-y-auto pb-10 pr-1">
           {children}
         </main>
       </div>

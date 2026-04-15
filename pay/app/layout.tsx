@@ -1,21 +1,12 @@
 import type { Metadata } from "next";
-import { Barlow_Condensed, Space_Grotesk } from "next/font/google";
-import AppShell from "@/components/layout/AppShell";
+import ConditionalShell from "@/components/layout/ConditionalShell";
+import AuthProvider from "@/components/providers/AuthProvider";
+import WalletProvider from "@/components/providers/WalletProvider";
+import NetworkProvider from "@/components/providers/NetworkProvider";
 import "./globals.css";
 
-const headingFont = Barlow_Condensed({
-  variable: "--font-heading",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
-});
-
-const bodyFont = Space_Grotesk({
-  variable: "--font-sans",
-  subsets: ["latin"],
-});
-
 export const metadata: Metadata = {
-  title: "ALGOSTACK Dashboard",
+  title: "Algopay Dashboard",
   description: "Operational dashboard for payments, gas pools, and agents.",
 };
 
@@ -25,12 +16,15 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${bodyFont.variable} ${headingFont.variable} h-full antialiased`}
-    >
-      <body className="min-h-full bg-[#212121] text-slate-100 font-sans">
-        <AppShell>{children}</AppShell>
+    <html lang="en" className="h-full antialiased">
+      <body className="min-h-full bg-[#212121] text-slate-100 font-inter">
+        <NetworkProvider>
+          <WalletProvider>
+            <AuthProvider>
+              <ConditionalShell>{children}</ConditionalShell>
+            </AuthProvider>
+          </WalletProvider>
+        </NetworkProvider>
       </body>
     </html>
   );

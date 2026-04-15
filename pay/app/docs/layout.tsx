@@ -85,7 +85,7 @@ export default function DocsLayout({ children }: { children: React.ReactNode }) 
           </div>
           <div className="flex items-center gap-3">
             <span className="text-xs font-mono px-3 py-1.5 rounded-full border border-zinc-200 text-zinc-500 bg-zinc-50">
-              v1 · testnet
+              v1
             </span>
           </div>
         </div>

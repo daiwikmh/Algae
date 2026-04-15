@@ -238,6 +238,30 @@ export async function processPayment(paymentId: string) {
             timestamp: Date.now(),
             detail: err.message,
         })
+
+        // restore pool balance and agent spent on on-chain failure
+        const amountUsdc = BigInt(payment.amountUsdc ?? '0')
+        const pool = await db.gasPool.findUnique({ where: { id: payment.poolId } })
+        if (pool) {
+            const restored = pool.balanceUsdc + amountUsdc
+            const newStatus = restored === 0n ? 'empty'
+                : restored <= pool.alertThresholdUsdc / 2n ? 'critical'
+                : restored <= pool.alertThresholdUsdc ? 'low'
+                : 'healthy'
+            await db.gasPool.update({
+                where: { id: payment.poolId },
+                data: { balanceUsdc: restored, status: newStatus },
+            })
+        }
+        const agent = await db.agent.findUnique({ where: { id: payment.agentId } })
+        if (agent) {
+            const restoredSpent = Math.max(0, agent.dailySpentCents - payment.amountUsdCents)
+            await db.agent.update({
+                where: { id: payment.agentId },
+                data: { dailySpentCents: restoredSpent, status: 'active' },
+            })
+        }
+
         await db.payment.update({
             where: { id: paymentId },
             data: {

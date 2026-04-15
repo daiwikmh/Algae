@@ -1,4 +1,4 @@
-import { AlgoStackClient } from '../client'
+import { AlgopayClient } from '../client'
 import {
     Agent,
     AgentStatusResult,
@@ -13,7 +13,7 @@ import {
 } from '../lib/sanitize'
 
 export class AgentsModule {
-    constructor(private readonly client: AlgoStackClient) { }
+    constructor(private readonly client: AlgopayClient) { }
 
     create(params: CreateAgentParams): Promise<Agent> {
         sanitizeId(params.poolId, 'poolId')

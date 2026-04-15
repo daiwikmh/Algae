@@ -1,4 +1,4 @@
-import { AlgoStackClient } from '../client'
+import { AlgopayClient } from '../client'
 import {
     Payment,
     InitiatePaymentParams,
@@ -13,12 +13,13 @@ const VALID_STATUSES = ['pending', 'processing', 'settled', 'failed']
 const VALID_NETWORKS = ['mainnet', 'testnet']
 
 export class PaymentsModule {
-    constructor(private readonly client: AlgoStackClient) { }
+    constructor(private readonly client: AlgopayClient) { }
 
     initiate(params: InitiatePaymentParams): Promise<Payment> {
         sanitizeId(params.invoiceId, 'invoiceId')
         sanitizeId(params.agentId, 'agentId')
         sanitizeId(params.poolId, 'poolId')
+        sanitizeId(params.merchantId, 'merchantId')
         sanitizePositiveInt(params.amountUsdCents, 'amountUsdCents')
         if (params.amountUsdCents < 1) {
             throw new Error('amountUsdCents must be at least 1')

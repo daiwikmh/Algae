@@ -49,6 +49,7 @@ export async function validateApiKey(
         if (match) {
             return {
                 id: record.id,
+                userId: record.userId,
                 name: record.name,
                 companyName: record.companyName,
                 network: record.network,
@@ -80,6 +81,11 @@ export async function revokeApiKey(
 }
 
 
+export async function revokeApiKeyById(keyId: string, userId: string): Promise<boolean> {
+    const result = await db.apiKey.deleteMany({ where: { id: keyId, userId } })
+    return result.count > 0
+}
+
 export async function getUserApiKeys(userId: string) {
     return db.apiKey.findMany({
         where: { userId },
@@ -89,6 +95,7 @@ export async function getUserApiKeys(userId: string) {
             name: true,
             companyName: true,
             network: true,
+            keyPrefix: true,
             createdAt: true,
         },
     })

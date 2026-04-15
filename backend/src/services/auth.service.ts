@@ -7,17 +7,21 @@ import { signAccessToken, signJwt } from '../lib/jwt'
 import { signRefreshToken } from '../lib/jwt'
 
 
-const github = new GitHubProvider({
-    clientId: process.env.GITHUB_CLIENT_ID!,
-    clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-    redirectUri: process.env.GITHUB_CALLBACK_URL!,
-})
+function github() {
+    return new GitHubProvider({
+        clientId: process.env.GITHUB_CLIENT_ID!,
+        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+        redirectUri: process.env.GITHUB_CALLBACK_URL!,
+    })
+}
 
-const google = new GoogleProvider({
-    clientId: process.env.GOOGLE_CLIENT_ID!,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-    redirectUri: process.env.GOOGLE_CALLBACK_URL!,
-})
+function google() {
+    return new GoogleProvider({
+        clientId: process.env.GOOGLE_CLIENT_ID!,
+        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        redirectUri: process.env.GOOGLE_CALLBACK_URL!,
+    })
+}
 
 function generateState(): string {
     return crypto.randomBytes(16).toString('hex')
@@ -76,12 +80,12 @@ async function upsertUser(
 
 // github
 export function getGitHubAuthUrl(): string {
-    return github.getAuthUrl(generateState())
+    return github().getAuthUrl(generateState())
 }
 
 export async function handleGitHubCallback(code: string) {
-    const tokens = await github.exchangeCodeForToken(code)
-    const profile = await github.getUserProfile(tokens.accessToken)
+    const tokens = await github().exchangeCodeForToken(code)
+    const profile = await github().getUserProfile(tokens.accessToken)
     const user = await upsertUser(profile, 'github')
 
     const accessToken = signAccessToken({
@@ -96,12 +100,12 @@ export async function handleGitHubCallback(code: string) {
 
 // google
 export function getGoogleAuthUrl(): string {
-    return google.getAuthUrl(generateState())
+    return google().getAuthUrl(generateState())
 }
 
 export async function handleGoogleCallback(code: string) {
-    const tokens = await google.exchangeCodeForToken(code)
-    const profile = await google.getUserProfile(tokens.accessToken)
+    const tokens = await google().exchangeCodeForToken(code)
+    const profile = await google().getUserProfile(tokens.accessToken)
     const user = await upsertUser(profile, 'google')
     const accessToken = signAccessToken({
         id: user.id,
@@ -154,4 +158,23 @@ export async function refreshAccessToken(refreshToken: string) {
 
 export async function revokeRefreshToken(token: string) {
     await db.refreshToken.deleteMany({ where: { token } })
+}
+
+export async function handleDevLogin() {
+    let user = await db.user.findFirst({ where: { email: 'demo@algopay.dev' } })
+    if (!user) {
+        user = await db.user.create({
+            data: {
+                email: 'demo@algopay.dev',
+                name: 'Demo User',
+            },
+        })
+    }
+    const accessToken = signAccessToken({
+        id: user.id,
+        provider: 'github',
+        email: user.email ?? 'demo@algopay.dev',
+    })
+    const refreshToken = await createRefreshToken(user.id)
+    return { user, accessToken, refreshToken }
 }

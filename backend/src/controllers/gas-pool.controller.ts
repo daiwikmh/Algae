@@ -3,6 +3,7 @@ import { z } from 'zod'
 import {
     createGasPool,
     getGasPoolBalance,
+    getGasPoolsByUser,
     topUpGasPool,
     updatePoolSettings,
 } from '../services/gas-pool.service'
@@ -23,6 +24,18 @@ const UpdateSettingsSchema = z.object({
     dailyCapCents: z.number().int().min(0).optional(),
     alertThresholdUsdc: z.string().regex(/^\d+$/).optional(),
 })
+
+export async function list(req: Request, res: Response): Promise<void> {
+    try {
+        const pools = await getGasPoolsByUser(req.userId!)
+        res.json(pools)
+    } catch (err) {
+        if (err instanceof Error) {
+            logger.error('Failed to list gas pools', err)
+            res.status(500).json({ error: err.message })
+        }
+    }
+}
 
 export async function create(req: Request, res: Response): Promise<void> {
     const parsed = CreatePoolSchema.safeParse(req.body)

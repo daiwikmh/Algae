@@ -1,6 +1,6 @@
 import { Request, Response } from 'express'
 import { z } from 'zod'
-import { createApikey, getUserApiKeys, revokeApiKey } from '../services/api-key.service'
+import { createApikey, getUserApiKeys, revokeApiKey, revokeApiKeyById } from '../services/api-key.service'
 
 const CreateSchema = z.object({
     name: z.string().min(1),
@@ -34,6 +34,19 @@ export async function revoke(req: Request, res: Response): Promise<void> {
 
 export async function validate(req: Request, res: Response): Promise<void> {
     res.status(200).json(req.apiKey)
+}
+
+export async function revokeById(req: Request, res: Response): Promise<void> {
+    try {
+        const success = await revokeApiKeyById(req.params.keyId, req.userId!)
+        if (!success) {
+            res.status(404).json({ error: 'API key not found' })
+            return
+        }
+        res.json({ success: true })
+    } catch (err) {
+        res.status(500).json({ error: 'Failed to revoke key' })
+    }
 }
 
 export async function listKeys(req: Request, res: Response): Promise<void> {

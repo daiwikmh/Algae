@@ -1,9 +1,9 @@
-import { AlgoStackClient } from "../client";
+import { AlgopayClient } from "../client";
 import { CreateGasPoolParams, GasPool, GasPoolBalance, TopUpGasPoolParams, UpdateGasPoolParams } from "../types";
 import { sanitizeId, sanitizeString, sanitizePositiveInt } from "../lib/sanitize";
 
 export class GasPoolModule {
-    constructor(private readonly client: AlgoStackClient) { }
+    constructor(private readonly client: AlgopayClient) { }
 
     create(params: CreateGasPoolParams): Promise<GasPool> {
         sanitizeId(params.apiKeyId, 'apiKeyId')

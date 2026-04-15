@@ -19,5 +19,6 @@ export async function authM(req: Request, res: Response, next: NextFunction): Pr
     }
 
     req.apiKey = apiKey
+    req.userId = apiKey.userId
     next();
 }

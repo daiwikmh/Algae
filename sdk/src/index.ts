@@ -1,22 +1,22 @@
-import { AlgoStackClient } from './client'
+import { AlgopayClient } from './client'
 import { GasPoolModule } from './modules/gas-pool'
 import { AgentsModule } from './modules/agents'
 import { PaymentsModule } from './modules/payments'
 import { WebhooksModule } from './modules/webhooks'
-import { AlgoStackConfig } from './types'
+import { AlgopayConfig } from './types'
 
-export class AlgoStack {
+export class Algopay {
     readonly gasPool: GasPoolModule
     readonly agents: AgentsModule
     readonly payments: PaymentsModule
     readonly webhooks: WebhooksModule
 
-    constructor(config: AlgoStackConfig) {
+    constructor(config: AlgopayConfig) {
         if (!config || typeof config !== 'object') {
-            throw new TypeError('AlgoStack: config must be an object')
+            throw new TypeError('Algopay: config must be an object')
         }
 
-        const client = new AlgoStackClient(config)
+        const client = new AlgopayClient(config)
 
         this.gasPool = new GasPoolModule(client)
         this.agents = new AgentsModule(client)
@@ -27,5 +27,5 @@ export class AlgoStack {
     }
 }
 
-export { AlgoStackRequestError } from './client'
+export { AlgopayRequestError } from './client'
 export * from './types'

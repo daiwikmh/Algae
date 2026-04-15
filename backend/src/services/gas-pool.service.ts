@@ -140,6 +140,17 @@ export async function debitFromPool(params: {
 }
 
 
+export async function getGasPoolsByUser(userId: string) {
+    return db.gasPool.findMany({
+        where: { userId },
+        include: {
+            apiKey: { select: { id: true, name: true, network: true, keyPrefix: true } },
+            agents: { select: { id: true } },
+        },
+        orderBy: { createdAt: 'desc' },
+    })
+}
+
 export async function updatePoolSettings(params: {
     apiKeyId: string
     dailyCapCents?: number

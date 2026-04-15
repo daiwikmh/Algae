@@ -1,4 +1,4 @@
-import { AlgoStackConfig, AlgoStackError } from './types'
+import { AlgopayConfig, AlgopayError } from './types'
 import { sanitizeParams } from './lib/sanitize'
 import { signRequest } from './lib/crypto'
 
@@ -7,13 +7,13 @@ const MAX_RETRIES = 2
 const API_KEY_PREFIX = 'as_'
 const API_KEY_MIN_LENGTH = 10
 
-export class AlgoStackRequestError extends Error {
+export class AlgopayRequestError extends Error {
     readonly code: string
     readonly status: number
 
     constructor(message: string, code: string, status: number) {
         super(message)
-        this.name = 'AlgoStackRequestError'
+        this.name = 'AlgopayRequestError'
         this.code = code
         this.status = status
     }
@@ -29,54 +29,37 @@ function sanitizeErrorMessage(message: string): string {
         .substring(0, 200)
 }
 
-function validateConfig(config: AlgoStackConfig): void {
+function validateConfig(config: AlgopayConfig): void {
     if (!config || typeof config !== 'object') {
-        throw new AlgoStackRequestError(
-            'Config must be an object',
-            'INVALID_CONFIG',
-            0
-        )
+        throw new AlgopayRequestError('Config must be an object', 'INVALID_CONFIG', 0)
     }
     if (!config.apiKey || typeof config.apiKey !== 'string') {
-        throw new AlgoStackRequestError(
-            'apiKey is required',
-            'INVALID_CONFIG',
-            0
-        )
+        throw new AlgopayRequestError('apiKey is required', 'INVALID_CONFIG', 0)
     }
     if (!config.apiKey.startsWith(API_KEY_PREFIX)) {
-        throw new AlgoStackRequestError(
+        throw new AlgopayRequestError(
             'Invalid API key format — must start with as_',
             'INVALID_API_KEY',
             0
         )
     }
     if (config.apiKey.length < API_KEY_MIN_LENGTH) {
-        throw new AlgoStackRequestError(
-            'Invalid API key — too short',
-            'INVALID_API_KEY',
-            0
-        )
+        throw new AlgopayRequestError('Invalid API key — too short', 'INVALID_API_KEY', 0)
     }
     if (config.baseUrl) {
         try {
             const parsed = new URL(config.baseUrl)
-            if (!['http:', 'https:'].includes(parsed.protocol)) {
-                throw new Error()
-            }
+            if (!['http:', 'https:'].includes(parsed.protocol)) throw new Error()
         } catch {
-            throw new AlgoStackRequestError(
+            throw new AlgopayRequestError(
                 'Invalid baseUrl — must be a valid HTTP/HTTPS URL',
                 'INVALID_CONFIG',
                 0
             )
         }
     }
-    if (
-        config.network &&
-        !['mainnet', 'testnet'].includes(config.network)
-    ) {
-        throw new AlgoStackRequestError(
+    if (config.network && !['mainnet', 'testnet'].includes(config.network)) {
+        throw new AlgopayRequestError(
             'Invalid network — must be mainnet or testnet',
             'INVALID_CONFIG',
             0
@@ -88,7 +71,7 @@ function validateConfig(config: AlgoStackConfig): void {
             config.timeoutMs < 1000 ||
             config.timeoutMs > 60000)
     ) {
-        throw new AlgoStackRequestError(
+        throw new AlgopayRequestError(
             'timeoutMs must be between 1000 and 60000',
             'INVALID_CONFIG',
             0
@@ -96,19 +79,16 @@ function validateConfig(config: AlgoStackConfig): void {
     }
 }
 
-export class AlgoStackClient {
+export class AlgopayClient {
     readonly #apiKey: string
     readonly #baseUrl: string
     readonly #network: string
     readonly #timeoutMs: number
 
-    constructor(config: AlgoStackConfig) {
+    constructor(config: AlgopayConfig) {
         validateConfig(config)
-
         this.#apiKey = config.apiKey
-        this.#baseUrl = (
-            config.baseUrl ?? 'https://api.algostack.io/api/v1'
-        ).replace(/\/$/, '')
+        this.#baseUrl = (config.baseUrl ?? 'https://api.algopay.dev/api/v1').replace(/\/$/, '')
         this.#network = config.network ?? 'testnet'
         this.#timeoutMs = config.timeoutMs ?? DEFAULT_TIMEOUT_MS
     }
@@ -126,19 +106,14 @@ export class AlgoStackClient {
         }
 
         const timestamp = Date.now().toString()
-        const signature = await signRequest(
-            method,
-            path,
-            timestamp,
-            this.#apiKey
-        )
+        const signature = await signRequest(method, path, timestamp, this.#apiKey)
 
         const headers: Record<string, string> = {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${this.#apiKey}`,
-            'X-AlgoStack-Network': this.#network,
-            'X-AlgoStack-Timestamp': timestamp,
-            'X-AlgoStack-Signature': signature,
+            'X-Algopay-Network': this.#network,
+            'X-Algopay-Timestamp': timestamp,
+            'X-Algopay-Signature': signature,
         }
 
         let serializedBody: string | undefined
@@ -146,8 +121,8 @@ export class AlgoStackClient {
             try {
                 serializedBody = JSON.stringify(body)
             } catch {
-                throw new AlgoStackRequestError(
-                    'Request body could not be serialized — check for circular references',
+                throw new AlgopayRequestError(
+                    'Request body could not be serialized',
                     'INVALID_BODY',
                     0
                 )
@@ -158,10 +133,7 @@ export class AlgoStackClient {
 
         for (let attempt = 0; attempt <= MAX_RETRIES; attempt++) {
             const controller = new AbortController()
-            const timeout = setTimeout(
-                () => controller.abort(),
-                this.#timeoutMs
-            )
+            const timeout = setTimeout(() => controller.abort(), this.#timeoutMs)
 
             try {
                 const res = await fetch(url.toString(), {
@@ -180,7 +152,7 @@ export class AlgoStackClient {
                     try {
                         data = await res.json()
                     } catch {
-                        throw new AlgoStackRequestError(
+                        throw new AlgopayRequestError(
                             'Response could not be parsed as JSON',
                             'PARSE_ERROR',
                             res.status
@@ -191,11 +163,11 @@ export class AlgoStackClient {
                 }
 
                 if (!res.ok) {
-                    const err = data as AlgoStackError
+                    const err = data as AlgopayError
                     const message = sanitizeErrorMessage(
                         err?.error ?? `Request failed with status ${res.status}`
                     )
-                    throw new AlgoStackRequestError(
+                    throw new AlgopayRequestError(
                         message,
                         err?.code ?? 'REQUEST_FAILED',
                         res.status
@@ -206,12 +178,10 @@ export class AlgoStackClient {
 
             } catch (err: any) {
                 clearTimeout(timeout)
-                if (err instanceof AlgoStackRequestError) {
-                    throw err
-                }
+                if (err instanceof AlgopayRequestError) throw err
 
                 if (err.name === 'AbortError') {
-                    throw new AlgoStackRequestError(
+                    throw new AlgopayRequestError(
                         `Request timed out after ${this.#timeoutMs}ms`,
                         'TIMEOUT',
                         0
@@ -219,26 +189,21 @@ export class AlgoStackClient {
                 }
 
                 lastError = err
-
                 if (attempt < MAX_RETRIES) {
-                    const delay = Math.pow(2, attempt) * 500
-                    await new Promise(resolve => setTimeout(resolve, delay))
+                    await new Promise(resolve => setTimeout(resolve, Math.pow(2, attempt) * 500))
                     continue
                 }
             }
         }
 
-        throw new AlgoStackRequestError(
+        throw new AlgopayRequestError(
             `Network error — ${lastError?.message ?? 'request failed after retries'}`,
             'NETWORK_ERROR',
             0
         )
     }
 
-    get<T>(
-        path: string,
-        params?: Record<string, string | number | undefined>
-    ): Promise<T> {
+    get<T>(path: string, params?: Record<string, string | number | undefined>): Promise<T> {
         return this.request<T>('GET', path, undefined, params)
     }
 

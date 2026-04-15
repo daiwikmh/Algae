@@ -1,7 +1,7 @@
 {
-  "name": "@algostack/sdk",
+  "name": "algopay-stack",
   "version": "0.1.0",
-  "description": "AlgoStack SDK — Agentic Payments API",
+  "description": "Algopay SDK — Algorand USDC payments for AI agents and businesses",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "files": [
@@ -19,9 +19,10 @@
     "blockchain",
     "usdc",
     "agentic",
+    "ai-agents",
     "web3"
   ],
-  "author": "AlgoStack",
+  "author": "Algopay",
   "license": "MIT",
   "engines": {
     "node": ">=18.0.0"

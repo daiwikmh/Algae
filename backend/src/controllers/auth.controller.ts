@@ -7,6 +7,7 @@ import {
     getUserById,
     refreshAccessToken,
     revokeRefreshToken,
+    handleDevLogin,
 } from '../services/auth.service'
 import { logger } from '../lib/logger'
 
@@ -132,4 +133,24 @@ export async function logout(req: Request, res: Response): Promise<void> {
     }
     res.clearCookie('refresh_token')
     res.json({ success: true })
+}
+
+export async function devLogin(_req: Request, res: Response): Promise<void> {
+    if (process.env.NODE_ENV === 'production') {
+        res.status(404).json({ error: 'Not found' })
+        return
+    }
+    try {
+        const { accessToken, refreshToken } = await handleDevLogin()
+        res.cookie('refresh_token', refreshToken, {
+            httpOnly: true,
+            secure: false,
+            sameSite: 'lax',
+            maxAge: 30 * 24 * 60 * 60 * 1000,
+        })
+        res.json({ accessToken })
+    } catch (err) {
+        if (err instanceof Error) logger.error('Dev login failed', err)
+        res.status(500).json({ error: 'Dev login failed' })
+    }
 }

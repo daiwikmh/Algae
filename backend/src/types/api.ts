@@ -16,6 +16,7 @@ export interface CreateApiKeyResponse {
 
 export interface ValidateApiKeyResponse {
     id: string
+    userId: string
     name: string
     companyName: string
     network: 'mainnet' | 'testnet'

@@ -1,4 +1,4 @@
-import { AlgoStackClient } from '../client'
+import { AlgopayClient } from '../client'
 import {
     Webhook,
     WebhookDelivery,
@@ -12,7 +12,7 @@ import {
 } from '../lib/sanitize'
 
 export class WebhooksModule {
-    constructor(private readonly client: AlgoStackClient) { }
+    constructor(private readonly client: AlgopayClient) { }
 
     register(
         params: RegisterWebhookParams

@@ -1,4 +1,4 @@
-export interface AlgoStackConfig {
+export interface AlgopayConfig {
     apiKey: string
     baseUrl?: string
     network?: 'mainnet' | 'testnet'
@@ -104,6 +104,7 @@ export interface Payment {
     userId: string
     agentId: string
     poolId: string
+    merchantId: string | null
     status: PaymentStatus
     amountUsdCents: number
     amountUsdc: string | null
@@ -112,7 +113,6 @@ export interface Payment {
     confirmedAt: string | null
     gasSponsored: boolean
     gasFeeAlgo: string | null
-    noahReference: string | null
     network: Network
     timeline: TimelineEvent[]
     createdAt: string
@@ -130,6 +130,7 @@ export interface InitiatePaymentParams {
     invoiceId: string
     agentId: string
     poolId: string
+    merchantId: string
     amountUsdCents: number
     network?: Network
 }
@@ -172,7 +173,7 @@ export interface WebhookDelivery {
     createdAt: string
 }
 
-export interface AlgoStackError {
+export interface AlgopayError {
     error: string
     code?: string
 }

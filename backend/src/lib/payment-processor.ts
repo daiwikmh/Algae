@@ -91,6 +91,7 @@ export async function submitOnChainPayment(params: {
             { appIndex: appId, name: new Uint8Array([...Buffer.from('inv'), ...invoiceBytes]) },
             { appIndex: registryId, name: new Uint8Array([...Buffer.from('ma'), ...merchantBytes]) },
             { appIndex: registryId, name: new Uint8Array([...Buffer.from('mc'), ...merchantBytes]) },
+            { appIndex: registryId, name: new Uint8Array([...Buffer.from('mx'), ...merchantBytes]) },
         ],
     })
 

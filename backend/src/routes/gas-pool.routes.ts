@@ -1,5 +1,6 @@
 import { Router } from 'express'
 import {
+    list,
     create,
     getBalance,
     topUp,
@@ -8,6 +9,7 @@ import {
 
 const router: Router = Router()
 
+router.get('/', list)
 router.post('/', create)
 router.get('/:apiKeyId/balance', getBalance)
 router.post('/:apiKeyId/topup', topUp)
