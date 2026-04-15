@@ -24,6 +24,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
   const [algoBalance, setAlgoBalance] = useState<string | null>(null);
   const [usdcBalance, setUsdcBalance] = useState<string | null>(null);
   const [showWallets, setShowWallets] = useState(false);
+  const [walletError, setWalletError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!activeAddress) {
@@ -158,15 +159,23 @@ export default function Header({ onMenuToggle }: HeaderProps) {
                     <p className="pb-1 text-xs uppercase tracking-wide text-slate-400">
                       Select Wallet
                     </p>
+                    {walletError && (
+                      <p className="rounded-md border border-rose-800 bg-rose-950/30 px-2 py-1.5 text-xs text-rose-300">
+                        {walletError}
+                      </p>
+                    )}
                     {wallets?.map((wallet) => (
                       <button
                         key={wallet.id}
                         type="button"
                         onClick={() => {
-                          wallet.connect().catch((e: unknown) => {
-                            console.error(`${wallet.metadata.name} connect failed`, e);
-                          });
-                          setShowWallets(false);
+                          setWalletError(null);
+                          wallet.connect()
+                            .then(() => setShowWallets(false))
+                            .catch((e: unknown) => {
+                              const msg = e instanceof Error ? e.message : "Failed to connect";
+                              setWalletError(msg);
+                            });
                         }}
                         className="flex w-full items-center gap-3 rounded-md border border-slate-700 px-3 py-2 text-sm text-slate-200 transition hover:border-slate-500 hover:bg-slate-800"
                       >
