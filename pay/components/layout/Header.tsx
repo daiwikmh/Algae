@@ -7,6 +7,7 @@ import { getAlgodClient, USDC_ASSET_ID } from "@/lib/algorand";
 import { ALGO_DECIMALS, USDC_DECIMALS } from "@/lib/constants";
 import { useAuth } from "@/components/providers/AuthProvider";
 import { useNetwork } from "@/components/providers/NetworkProvider";
+import Image from "next/image";
 import type { Network } from "@/lib/types";
 
 type HeaderProps = {
@@ -74,9 +75,13 @@ export default function Header({ onMenuToggle }: HeaderProps) {
             <span className="block h-0.5 w-5 bg-current" />
           </button>
 
-          <p className="text-2xl uppercase leading-none tracking-wide text-slate-100">
-            Algopay.
-          </p>
+          <Image
+            src="/logo.svg"
+            alt="Logo"
+            width={150}
+            height={100}
+            className=""
+          />
 
           <div className="hidden items-center rounded-lg border border-slate-800 bg-[#212121] p-1 sm:flex">
             {(["testnet", "mainnet"] as Network[]).map((n) => (
