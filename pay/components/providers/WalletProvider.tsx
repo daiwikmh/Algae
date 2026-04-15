@@ -31,7 +31,7 @@ export default function AlgoWalletProvider({ children }: Props) {
   const manager = useMemo(
     () =>
       new WalletManager({
-        wallets: [WalletId.PERA, WalletId.EXODUS],
+        wallets: [WalletId.PERA, WalletId.DEFLY],
         networks: {
           [NetworkId.TESTNET]: DEFAULT_NETWORK_CONFIG[NetworkId.TESTNET],
           [NetworkId.MAINNET]: DEFAULT_NETWORK_CONFIG[NetworkId.MAINNET],

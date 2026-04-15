@@ -1,34 +1,15 @@
 "use client";
 
-import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { api, setApiToken } from "@/lib/api";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
-// strip /api/v1 to get the backend base for OAuth redirects (browser navigates there directly)
 const BACKEND_URL = API_URL.replace(/\/api\/v1$/, "");
 
 export default function LoginPage() {
   const router = useRouter();
-  const [devLoading, setDevLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   function handleOAuth(provider: "google" | "github") {
     window.location.href = `${BACKEND_URL}/api/v1/auth/${provider}`;
-  }
-
-  async function handleDevLogin() {
-    setDevLoading(true);
-    setError(null);
-    try {
-      const data = await api.post<{ accessToken: string }>("/auth/dev-login", {});
-      setApiToken(data.accessToken);
-      router.replace("/");
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Login failed");
-    } finally {
-      setDevLoading(false);
-    }
   }
 
   return (
@@ -39,12 +20,6 @@ export default function LoginPage() {
           <div className="h-1 w-24 rounded-full bg-btn-gradient" />
           <p className="text-sm text-slate-400">Payment infrastructure for Businesses</p>
         </div>
-
-        {error && (
-          <p className="mb-4 rounded-md border border-rose-800 bg-rose-950/30 px-3 py-2 text-sm text-rose-300">
-            {error}
-          </p>
-        )}
 
         <div className="space-y-3">
           <button
@@ -65,21 +40,6 @@ export default function LoginPage() {
             Continue with GitHub
           </button>
         </div>
-
-        <div className="my-6 flex items-center gap-3">
-          <div className="h-px flex-1 bg-slate-800" />
-          <span className="text-xs text-slate-600">or</span>
-          <div className="h-px flex-1 bg-slate-800" />
-        </div>
-
-        <button
-          type="button"
-          onClick={handleDevLogin}
-          disabled={devLoading}
-          className="w-full rounded-md border border-slate-700 py-2.5 text-xs uppercase tracking-wide text-slate-400 transition hover:border-slate-500 hover:text-slate-200 disabled:opacity-50"
-        >
-          {devLoading ? "Signing in..." : "Dev Login (no DB required)"}
-        </button>
       </div>
     </div>
   );
