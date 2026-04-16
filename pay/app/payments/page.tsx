@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import { Funnel, SlidersHorizontal, Plus, X, CheckCircle2, Loader2 } from "lucide-react";
+import { useWallet } from "@txnlab/use-wallet-react";
 import { api, ApiError } from "@/lib/api";
 import type { Payment, PaymentStatus, Agent, GasPool, Merchant } from "@/lib/types";
 
@@ -40,9 +41,11 @@ type NewPaymentStep = "form" | "processing" | "done" | "error";
 interface NewPaymentModalProps {
   onClose: () => void;
   onSuccess: () => void;
+  activeAddress: string | null;
+  signTransactions: (txns: Uint8Array[]) => Promise<(Uint8Array | null)[]>;
 }
 
-function NewPaymentModal({ onClose, onSuccess }: NewPaymentModalProps) {
+function NewPaymentModal({ onClose, onSuccess, activeAddress, signTransactions }: NewPaymentModalProps) {
   const [agents, setAgents] = useState<Agent[]>([]);
   const [pools, setPools] = useState<GasPool[]>([]);
   const [merchants, setMerchants] = useState<Merchant[]>([]);
@@ -79,6 +82,11 @@ function NewPaymentModal({ onClose, onSuccess }: NewPaymentModalProps) {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!activeAddress) {
+      setErrorMsg("Connect your wallet before initiating a payment.");
+      setStep("error");
+      return;
+    }
     const amountCents = Math.round(parseFloat(form.amountUsd) * 100);
     if (!amountCents || amountCents < 1) return;
 
@@ -86,6 +94,7 @@ function NewPaymentModal({ onClose, onSuccess }: NewPaymentModalProps) {
     setErrorMsg(null);
 
     try {
+      // 1. Create the payment record
       const payment = await api.post<Payment>("/payments", {
         invoiceId: form.invoiceId,
         agentId: form.agentId,
@@ -95,7 +104,24 @@ function NewPaymentModal({ onClose, onSuccess }: NewPaymentModalProps) {
         network: form.network,
       });
 
-      const settled = await api.post<Payment>(`/payments/${payment.id}/process`, {});
+      // 2. Build the unsigned transaction group (txn[1] sender = connected wallet)
+      const { encodedTxns } = await api.post<{ encodedTxns: string[] }>(
+        `/payments/${payment.id}/prepare`,
+        { walletAddress: activeAddress }
+      );
+
+      // 3. Decode txn[1] and sign with the connected wallet
+      const xferBytes = Uint8Array.from(Buffer.from(encodedTxns[1], "base64"));
+      const signed = await signTransactions([xferBytes]);
+      const signedBytes = signed[0];
+      if (!signedBytes) throw new Error("Wallet did not sign the transaction.");
+      const walletSignedXferTxn = Buffer.from(signedBytes).toString("base64");
+
+      // 4. Submit — backend signs txn[0] (lsig) and txn[2] (deployer), submits the group
+      const settled = await api.post<Payment>(`/payments/${payment.id}/process`, {
+        encodedTxns,
+        walletSignedXferTxn,
+      });
       setTxnId(settled.algoTxnId);
       setStep("done");
     } catch (err) {
@@ -229,15 +255,20 @@ function NewPaymentModal({ onClose, onSuccess }: NewPaymentModalProps) {
                     </div>
                   </div>
 
-                  {agents.length === 0 || merchants.length === 0 || pools.length === 0 ? (
+                  {!activeAddress && (
+                    <p className="rounded-md border border-rose-800 bg-rose-950/30 px-3 py-2 text-xs text-rose-300">
+                      Connect your wallet first — USDC will be sent from your connected address.
+                    </p>
+                  )}
+                  {activeAddress && (agents.length === 0 || merchants.length === 0 || pools.length === 0) && (
                     <p className="rounded-md border border-amber-800 bg-amber-950/30 px-3 py-2 text-xs text-amber-300">
                       You need at least one agent, gas pool, and merchant before initiating a payment.
                     </p>
-                  ) : null}
+                  )}
 
                   <button
                     type="submit"
-                    disabled={agents.length === 0 || merchants.length === 0 || pools.length === 0}
+                    disabled={!activeAddress || agents.length === 0 || merchants.length === 0 || pools.length === 0}
                     className="h-11 w-full rounded-md border border-amber-100/20 bg-btn-gradient text-sm uppercase tracking-wide text-slate-900 disabled:opacity-40"
                   >
                     Initiate and Settle Payment
@@ -317,6 +348,7 @@ const LIMIT = 20;
 
 export default function PaymentsPage() {
   const router = useRouter();
+  const { activeAddress, signTransactions } = useWallet();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -366,6 +398,8 @@ export default function PaymentsPage() {
           <NewPaymentModal
             onClose={() => setShowNewPayment(false)}
             onSuccess={fetchPayments}
+            activeAddress={activeAddress}
+            signTransactions={signTransactions}
           />
         )}
       </AnimatePresence>

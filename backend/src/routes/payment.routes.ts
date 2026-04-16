@@ -1,6 +1,7 @@
 import { Router } from 'express'
 import {
     initiate,
+    prepare,
     process,
     getById,
     getByInvoice,
@@ -11,6 +12,7 @@ import {
 const router: Router = Router()
 
 router.post('/', initiate)
+router.post('/:paymentId/prepare', prepare)
 router.post('/:paymentId/process', process)
 router.get('/', listByUser)
 router.get('/invoice/:invoiceId', getByInvoice)

@@ -103,11 +103,11 @@ export default function Header({ onMenuToggle }: HeaderProps) {
 
         <div className="relative flex items-center gap-4 text-sm text-slate-300">
           <nav className="hidden items-center gap-5 md:flex">
+            {user && (
+              <span className="text-sm font-medium text-slate-100">{user.name ?? user.email}</span>
+            )}
             <a href="/docs" className="transition hover:text-white">Docs</a>
             <a href="/support" className="transition hover:text-white">Support</a>
-            {user && (
-              <span className="text-xs text-slate-500">{user.name ?? user.email}</span>
-            )}
             {/* {user && (
               <button
                 type="button"

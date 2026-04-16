@@ -130,6 +130,110 @@ export async function submitOnChainPayment(params: {
     return { txnId, blockRound }
 }
 
+export async function buildPaymentGroup(params: {
+    amountUsdc: bigint
+    invoiceId: string
+    merchantId: string
+    network: string
+    walletAddress: string
+}): Promise<{ encodedTxns: string[] }> {
+    const net = toNetwork(params.network)
+    const algod = getAlgodClient(net)
+    const { addr: signerAddr } = getDeployerAccount()
+    const appId = getProcessorAppId()
+    const processorAddr = getProcessorAddress()
+    const usdcId = USDC_ASSET_ID[net]
+
+    const sp = await algod.getTransactionParams().do()
+    const lsig = await getGasPoolLsig(algod)
+    const dummySigner: algosdk.TransactionSigner = () => Promise.resolve([])
+
+    const iface = new algosdk.ABIInterface(arc4Json)
+    const method = iface.getMethodByName('processPayment')
+
+    const atc = new algosdk.AtomicTransactionComposer()
+
+    atc.addTransaction({
+        txn: algosdk.makePaymentTxnWithSuggestedParamsFromObject({
+            sender: lsig.address(),
+            receiver: lsig.address(),
+            amount: 0,
+            lease: invoiceLease(params.invoiceId),
+            suggestedParams: { ...sp, fee: MIN_FEE * 5, flatFee: true },
+        }),
+        signer: dummySigner,
+    })
+
+    atc.addTransaction({
+        txn: algosdk.makeAssetTransferTxnWithSuggestedParamsFromObject({
+            sender: params.walletAddress,
+            receiver: processorAddr,
+            assetIndex: usdcId,
+            amount: Number(params.amountUsdc),
+            suggestedParams: { ...sp, fee: 0, flatFee: true },
+        }),
+        signer: dummySigner,
+    })
+
+    const registryId = Number(process.env.MERCHANT_REGISTRY_APP_ID ?? '0')
+    const invoiceBytes = new Uint8Array(Buffer.from(params.invoiceId))
+    const merchantBytes = new Uint8Array(Buffer.from(params.merchantId))
+
+    atc.addMethodCall({
+        appID: appId,
+        method,
+        methodArgs: [invoiceBytes, merchantBytes, Number(params.amountUsdc)],
+        sender: signerAddr,
+        signer: dummySigner,
+        suggestedParams: { ...sp, fee: 0, flatFee: true },
+        appForeignApps: [registryId],
+        boxes: [
+            { appIndex: appId, name: new Uint8Array([...Buffer.from('inv'), ...invoiceBytes]) },
+            { appIndex: registryId, name: new Uint8Array([...Buffer.from('ma'), ...merchantBytes]) },
+            { appIndex: registryId, name: new Uint8Array([...Buffer.from('mc'), ...merchantBytes]) },
+            { appIndex: registryId, name: new Uint8Array([...Buffer.from('mx'), ...merchantBytes]) },
+        ],
+    })
+
+    const group = atc.buildGroup()
+    const encodedTxns = group.map((t) =>
+        Buffer.from(algosdk.encodeUnsignedTransaction(t.txn)).toString('base64')
+    )
+    return { encodedTxns }
+}
+
+export async function submitGroupWithWalletXfer(params: {
+    encodedTxns: string[]
+    walletSignedXferTxn: string
+    network: string
+}): Promise<{ txnId: string; blockRound: number }> {
+    const net = toNetwork(params.network)
+    const algod = getAlgodClient(net)
+
+    const mnemonic = process.env.DEPLOYER_MNEMONIC
+    if (!mnemonic) throw new Error('DEPLOYER_MNEMONIC not set')
+    const deployerAccount = algosdk.mnemonicToSecretKey(mnemonic)
+
+    const lsig = await getGasPoolLsig(algod)
+
+    const txn0 = algosdk.decodeUnsignedTransaction(Buffer.from(params.encodedTxns[0], 'base64'))
+    const txn2 = algosdk.decodeUnsignedTransaction(Buffer.from(params.encodedTxns[2], 'base64'))
+
+    const signed0 = algosdk.signLogicSigTransaction(txn0, lsig)
+    const signed1 = new Uint8Array(Buffer.from(params.walletSignedXferTxn, 'base64'))
+    const signed2 = txn2.signTxn(deployerAccount.sk)
+
+    const sendResult = await algod.sendRawTransaction([signed0.blob, signed1, signed2]).do()
+    const txid = (sendResult as { txid?: string; txId?: string }).txid ?? (sendResult as { txId?: string }).txId ?? ''
+
+    const confirmation = await algosdk.waitForConfirmation(algod, txid, 4)
+    const blockRound = typeof confirmation.confirmedRound === 'bigint'
+        ? Number(confirmation.confirmedRound)
+        : Number(confirmation.confirmedRound ?? 0)
+
+    return { txnId: txid, blockRound }
+}
+
 export async function verifyOnChainPayment(params: {
     txnId: string
     network: string

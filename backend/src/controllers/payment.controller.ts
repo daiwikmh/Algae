@@ -2,6 +2,7 @@ import type { Request, Response } from 'express'
 import { z } from 'zod'
 import {
     initiatePayment,
+    preparePayment,
     processPayment,
     getPayment,
     getPaymentsByUser,
@@ -50,9 +51,31 @@ export async function initiate(req: Request, res: Response): Promise<void> {
     }
 }
 
-export async function process(req: Request, res: Response): Promise<void> {
+export async function prepare(req: Request, res: Response): Promise<void> {
+    const walletAddress = req.body?.walletAddress as string | undefined
+    if (!walletAddress) {
+        res.status(400).json({ error: 'walletAddress required' })
+        return
+    }
     try {
-        const payment = await processPayment(req.params.paymentId)
+        const result = await preparePayment(req.params.paymentId, walletAddress)
+        res.json(result)
+    } catch (err) {
+        if (err instanceof Error) {
+            logger.error('Failed to prepare payment', err)
+            res.status(400).json({ error: err.message })
+        }
+    }
+}
+
+export async function process(req: Request, res: Response): Promise<void> {
+    const { walletSignedXferTxn, encodedTxns } = req.body ?? {}
+    try {
+        const payment = await processPayment(
+            req.params.paymentId,
+            walletSignedXferTxn as string | undefined,
+            encodedTxns as string[] | undefined,
+        )
         res.json(payment)
     } catch (err) {
         if (err instanceof Error) {

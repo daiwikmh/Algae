@@ -6,6 +6,8 @@ import { createAuditLog } from "./audit.service"
 import { triggerWebhook } from "./webhook.service"
 import {
     submitOnChainPayment,
+    buildPaymentGroup,
+    submitGroupWithWalletXfer,
     getGasFeeAlgo as fetchGasFeeAlgo,
 } from "../lib/payment-processor"
 
@@ -86,7 +88,23 @@ export async function initiatePayment(params: {
     }
 }
 
-export async function processPayment(paymentId: string) {
+export async function preparePayment(paymentId: string, walletAddress: string) {
+    const payment = await db.payment.findUnique({ where: { id: paymentId } })
+    if (!payment) throw new Error('Payment not found')
+    if (payment.status !== 'pending') throw new Error(`Payment already ${payment.status}`)
+    if (!payment.merchantId) throw new Error('Payment has no merchantId')
+
+    const { encodedTxns } = await buildPaymentGroup({
+        amountUsdc: BigInt(payment.amountUsdc ?? '0'),
+        invoiceId: payment.invoiceId,
+        merchantId: payment.merchantId,
+        network: payment.network,
+        walletAddress,
+    })
+    return { encodedTxns }
+}
+
+export async function processPayment(paymentId: string, walletSignedXferTxn?: string, encodedTxns?: string[]) {
     const payment = await db.payment.findUnique({
         where: { id: paymentId },
         include: { agent: true, pool: true }
@@ -168,12 +186,18 @@ export async function processPayment(paymentId: string) {
 
         if (!payment.merchantId) throw new Error('Payment has no merchantId')
 
-        const { txnId, blockRound } = await submitOnChainPayment({
-            amountUsdc: BigInt(payment.amountUsdc ?? '0'),
-            invoiceId: payment.invoiceId,
-            merchantId: payment.merchantId,
-            network: payment.network,
-        })
+        const { txnId, blockRound } = (walletSignedXferTxn && encodedTxns)
+            ? await submitGroupWithWalletXfer({
+                encodedTxns,
+                walletSignedXferTxn,
+                network: payment.network,
+            })
+            : await submitOnChainPayment({
+                amountUsdc: BigInt(payment.amountUsdc ?? '0'),
+                invoiceId: payment.invoiceId,
+                merchantId: payment.merchantId,
+                network: payment.network,
+            })
 
         timeline = addTimelineEvent(timeline, {
             step: 'Submitted to Algorand',
