@@ -108,7 +108,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
             {user && (
               <span className="text-xs text-slate-500">{user.name ?? user.email}</span>
             )}
-            {user && (
+            {/* {user && (
               <button
                 type="button"
                 onClick={logout}
@@ -116,7 +116,7 @@ export default function Header({ onMenuToggle }: HeaderProps) {
               >
                 Logout
               </button>
-            )}
+            )} */}
           </nav>
 
           {activeAddress ? (

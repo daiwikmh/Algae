@@ -92,7 +92,7 @@ model ApiKey {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user    User     @relation(fields: [userId], references: [id])
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   gasPool GasPool?
 
   @@map("api_keys")
@@ -109,8 +109,8 @@ model GasPool {
   createdAt          DateTime   @default(now())
   updatedAt          DateTime   @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id])
-  apiKey   ApiKey    @relation(fields: [apiKeyId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKey   ApiKey    @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
   agents   Agent[]
   payments Payment[]
 
@@ -132,8 +132,8 @@ model Agent {
   createdAt           DateTime    @default(now())
   updatedAt           DateTime    @updatedAt
 
-  user     User      @relation(fields: [userId], references: [id])
-  pool     GasPool   @relation(fields: [poolId], references: [id])
+  user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pool     GasPool   @relation(fields: [poolId], references: [id], onDelete: Cascade)
   payments Payment[]
 
   @@index([userId])
@@ -163,9 +163,9 @@ model Payment {
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
-  user  User    @relation(fields: [userId], references: [id])
-  agent Agent   @relation(fields: [agentId], references: [id])
-  pool  GasPool @relation(fields: [poolId], references: [id])
+  user  User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  agent Agent   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  pool  GasPool @relation(fields: [poolId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([agentId])
@@ -187,7 +187,7 @@ model WebhookDelivery {
   deliveredAt DateTime?
   createdAt   DateTime     @default(now())
 
-  webhook Webhook @relation(fields: [webhookId], references: [id])
+  webhook Webhook @relation(fields: [webhookId], references: [id], onDelete: Cascade)
 
   @@index([webhookId])
   @@index([success])
@@ -205,7 +205,7 @@ model Webhook {
   createdAt DateTime       @default(now())
   updatedAt DateTime       @updatedAt
 
-  user       User              @relation(fields: [userId], references: [id])
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   deliveries WebhookDelivery[]
 
   @@map("webhooks")
@@ -218,7 +218,7 @@ model RefreshToken {
   expiresAt DateTime
   createdAt DateTime @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("refresh_tokens")
@@ -233,7 +233,7 @@ model Merchant {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@map("merchants")
@@ -248,7 +248,7 @@ model AuditLog {
   requestId String?
   createdAt DateTime    @default(now())
 
-  user User @relation(fields: [userId], references: [id])
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
   @@index([action])

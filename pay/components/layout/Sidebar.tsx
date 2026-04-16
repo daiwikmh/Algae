@@ -25,7 +25,7 @@ const sidebarItems = [
   { key: "gas", label: "Gas", href: "/gas" },
   { key: "playground", label: "Playground", href: "/playground" },
   // { key: "webhooks", label: "Web Hooks", href: "/webhooks" },
-  { key: "apihooks", label: "Api Hooks", href: "/api-hooks" },
+  // { key: "apihooks", label: "Api Hooks", href: "/api-hooks" },
   { key: "settings", label: "Settings", href: "/settings" },
 ];
 
