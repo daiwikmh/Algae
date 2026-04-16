@@ -1,14 +1,23 @@
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4000/api/v1";
 
+const TOKEN_KEY = "algopay_token";
+
 let _token: string | null = null;
 let _refreshing: Promise<string | null> | null = null;
 
 export function setApiToken(token: string): void {
   _token = token;
+  if (typeof window !== "undefined") localStorage.setItem(TOKEN_KEY, token);
 }
 
 export function clearApiToken(): void {
   _token = null;
+  if (typeof window !== "undefined") localStorage.removeItem(TOKEN_KEY);
+}
+
+export function loadStoredToken(): string | null {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem(TOKEN_KEY);
 }
 
 export class ApiError extends Error {
@@ -56,7 +65,7 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
     }
     const newToken = await _refreshing;
     if (newToken) {
-      _token = newToken;
+      setApiToken(newToken);
       const retryHeaders = { ...headers, Authorization: `Bearer ${newToken}` };
       const retry = await fetch(`${BASE_URL}${path}`, {
         ...options,

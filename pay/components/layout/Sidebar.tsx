@@ -15,6 +15,7 @@ import {
   Webhook,
   type LucideIcon,
 } from "lucide-react";
+import { useAuth } from "@/components/providers/AuthProvider";
 
 const sidebarItems = [
   { key: "home", label: "Home", href: "/" },
@@ -46,6 +47,7 @@ type SidebarProps = {
 
 export default function Sidebar({ onNavigate }: SidebarProps) {
   const pathname = usePathname();
+  const { logout } = useAuth();
 
   return (
     <aside className="flex h-full w-full flex-col bg-[#212121] lg:bg-[#151515] p-4 md:p-0 mt-16 lg:mt-0 pb-16 lg:pb-0 rounded-xl">
@@ -90,6 +92,7 @@ export default function Sidebar({ onNavigate }: SidebarProps) {
       <div className="mt-auto border-t border-slate-800 pt-4">
         <button
           type="button"
+          onClick={logout}
           className="flex w-full items-center gap-4 rounded-lg border border-white/40 px-4 py-3 text-sm font-medium uppercase tracking-wide text-red-500 transition hover:text-red-500/50"
         >
           <LogOut className="h-4 w-4" strokeWidth={1.9} />
