@@ -7,12 +7,30 @@ import { requestLogger } from './middleware/request-logger'
 import { db } from '../db/client'
 import { errorHandler } from './middleware/error'
 import { requestId } from './middleware/request-id'
-import cookieParser from 'cookie-parser';
+import cookieParser from 'cookie-parser'
+
 const app: express.Application = express()
 
 app.set('trust proxy', 1)
 
-app.use(requestId)
+app.use((req, res, next) => {
+    if (
+        process.env.NODE_ENV === 'production' &&
+        req.headers['x-forwarded-proto'] !== 'https'
+    ) {
+        res.redirect(301, `https://${req.headers.host}${req.url}`)
+        return
+    }
+    next()
+})
+
+app.use(cors({
+    origin: process.env.FRONTEND_URL,
+    credentials: true,
+    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}))
+
 app.use(helmet({
     contentSecurityPolicy: {
         directives: {
@@ -23,12 +41,12 @@ app.use(helmet({
         },
     },
 }))
-app.use(cors({
-    origin: process.env.FRONTEND_URL,
-    credentials: true,
-    methods: ['GET', 'POST', 'PATCH', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}))
+
+app.use(express.json({ limit: '10kb' }))
+app.use(cookieParser())
+
+app.use(requestId)
+app.use(requestLogger)
 
 const globalLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
@@ -41,14 +59,9 @@ const authLimiter = rateLimit({
     max: 20,
     message: { error: 'Too many auth attempts, please try again later' },
 })
+
 app.use('/api/v1', globalLimiter)
-
 app.use('/api/v1/auth', authLimiter)
-
-app.use(express.json({ limit: '10kb' }))
-app.use(cookieParser())
-
-app.use(requestLogger)
 
 app.use((_req, res, next) => {
     const originalJson = res.json.bind(res)
@@ -60,19 +73,6 @@ app.use((_req, res, next) => {
                 )
             )
         )
-    }
-    next()
-})
-
-
-
-app.use((req, res, next) => {
-    if (
-        process.env.NODE_ENV === 'production' &&
-        req.headers['x-forwarded-proto'] !== 'https'
-    ) {
-        res.redirect(301, `https://${req.headers.host}${req.url}`)
-        return
     }
     next()
 })
@@ -89,6 +89,5 @@ app.get('/health', async (_req, res) => {
 })
 
 app.use(errorHandler)
-
 
 export default app

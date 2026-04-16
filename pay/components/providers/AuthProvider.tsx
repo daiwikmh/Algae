@@ -27,13 +27,13 @@ export function useAuth() {
   return useContext(AuthContext);
 }
 
+const AUTH_PATHS = ["/login", "/auth/callback"];
+
 export default function AuthProvider({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const [user, setUser] = useState<User | null>(null);
   const [ready, setReady] = useState(false);
-
-  const AUTH_PATHS = ["/login", "/auth/callback"];
 
   const bootstrap = useCallback(async () => {
     if (AUTH_PATHS.includes(pathname)) {
@@ -52,12 +52,10 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     } finally {
       setReady(true);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname, router]);
 
   useEffect(() => {
     bootstrap();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const logout = useCallback(async () => {
@@ -68,6 +66,8 @@ export default function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null);
     router.replace("/login");
   }, [router]);
+
+  if (!ready) return null;
 
   return (
     <AuthContext.Provider value={{ user, ready, logout }}>
